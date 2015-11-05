@@ -1,4 +1,5 @@
 from twx.botapi import TelegramBot, ReplyKeyboardMarkup
+import re
 
 """
 Setup the bot
@@ -18,9 +19,18 @@ Send a message to a user
 """
 Get updates sent to the bot
 """
-updates = bot.get_updates().wait()
-for update in updates:
-    print(update)
+last_update_id = int(0)
+while True:
+    updates = bot.get_updates(offset=last_update_id+1).wait()
+    for update in updates:
+        last_update_id = update.update_id
+        print(update)
+        if update.message.text is None:
+            continue
+        match = re.search('^[Nn]it[sc]+h+ *: *(.*)', update.message.text);
+        if match:
+            answer = match.group(1)
+            bot.send_message(update.message.chat.id, 'Je dis ' + answer).wait()
 
 """
 Use a custom keyboard
