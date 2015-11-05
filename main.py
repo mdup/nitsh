@@ -5,7 +5,14 @@ import re
 Setup the bot
 """
 
-bot = TelegramBot('133644230:AAHYjwMx0wEJU6UNSHvn65wzk4dnPHjMjKg')
+try:
+    with open ('API_KEY', 'r') as myfile:
+        api_key=myfile.read().replace('\n', '')
+except IOError:
+    print "please write the api key in file `API_KEY`"
+    exit(1)
+
+bot = TelegramBot(api_key)
 bot.update_bot_info().wait()
 print(bot.username)
 
