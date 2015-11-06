@@ -5,10 +5,14 @@ from twx.botapi import TelegramBot, ReplyKeyboardMarkup
 import re
 import random
 import traceback
+import reminders
+from datetime import datetime
 
 bot = None
 
 knowledge = {}
+
+rems = []
 
 def learn_sentence(sentence):
     sentence = sentence.lower()
@@ -103,8 +107,8 @@ def random_i_know():
 
 
 
-
 def process_update(bot, update):
+    global rems
     if update.message.text is None:
         pass
     match = re.search('^[Nn]it[sc]+h+ *: *(.*)', update.message.text);
@@ -115,8 +119,25 @@ def process_update(bot, update):
         if question:
             recall_knowledge(update.message.text, bot, update)
         else:
-            bot.send_message(chatid, 'Je dis ' + msg).wait()
-            learn_sentence(msg)
+            rem = reminders.Reminder.parse(msg)
+            if rem:
+                print "rem!!!"
+                rem.chatid = chatid
+                rem.id = random.randint(0, 999999) #not clean, but I want to go to bed now
+                rems.append(rem)
+                bot.send_message(chatid, u"OK! rappel " + str(rem.id) + ": \n\n"
+                        + unicode(rem)).wait()
+            else:
+                match = re.search("[sS]upprimer? *(le)? *rappel *([0-9]+)", update.message.text)
+                if match:
+                    remid = int(match.group(2))
+                    print "removing reminder " + str(remid)
+                    rems = [rem for rem in rems if rem.id != remid]
+                    print "rems = " + str(rems)
+                    bot.send_message(chatid, u'Très bien, le rappel ' + str(remid) + u' est supprimé.').wait()
+                else:
+                    bot.send_message(chatid, 'Je dis ' + msg).wait()
+                    learn_sentence(msg)
     else:
         learn_sentence(update.message.text)
 
@@ -135,11 +156,20 @@ def main():
     last_update_id = int(0)
     while True:
         try:
-            updates = bot.get_updates(offset=last_update_id+1).wait()
+            updates = bot.get_updates(offset=last_update_id+1, timeout=5).wait()
             for update in updates:
                 last_update_id = update.update_id
                 print(update)
                 process_update(bot, update)
+            global rems
+            for rem in rems:
+                if rem.when < datetime.now():
+                    bot.send_message(rem.chatid, "=== RAPPEL ===\n\n" +
+                            unicode(rem.what))
+                    print "removing reminder " + str(rem.id)
+                    rems = [r for r in rems if r.id != rem.id]
+                    print "rems = " + str(rems)
+
         except KeyboardInterrupt:
             # Allow ctrl-c.
             raise KeyboardInterrupt
