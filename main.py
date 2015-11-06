@@ -18,9 +18,6 @@ def learn_sentence(sentence):
     sentence = sentence.lower()
     s = sentence.split(' ')
     print s
-    if "est" not in s and "a" not in s:
-        print "not"
-        return
     s = [w for w in s if w != 'est' or w != 'a']
     s = [w for w in s if not is_stopword(w)]
     for w in s:
@@ -42,7 +39,7 @@ def recall_knowledge(sentence, bot, update):
 
 def is_stopword(w):
     stopwords = [
-        u"est", u"a", u"à",
+        u"est", u"a", u"à", u"si", u"?",
         u"ailleurs", u"afin", u"de", u"que", u"ainsi", u"alors", u"après", u"au-dessous",
         u"au-dessus", u"aujourd’hui", u"auparavant", u"auprès", u"aussi", u"aussitôt",
         u"autant", u"autour", u"autrefois", u"autrement", u"avant", u"avec", u"beaucoup",
